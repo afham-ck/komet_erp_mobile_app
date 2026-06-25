@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../constants/api_constants.dart';
 import 'api_interceptors.dart';
 
 class DioClient {
@@ -11,6 +12,7 @@ class DioClient {
 
   static Dio _create() {
     final dio = Dio(BaseOptions(
+      baseUrl: ApiConstants.baseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
       headers: {'Content-Type': 'application/json'},

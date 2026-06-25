@@ -1,53 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'core/theme/app_theme.dart';
-import 'presentation/providers/auth_provider.dart';
-import 'presentation/providers/customer_provider.dart';
-import 'presentation/screens/customer_list_screen.dart';
-import 'presentation/screens/login_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:komet_collection/core/theme/app_theme.dart';
+import 'package:komet_collection/core/di/injection.dart';
+import 'package:komet_collection/core/router/app_router.dart';
+import 'package:komet_collection/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:komet_collection/features/customer/presentation/bloc/customer_bloc.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  initDependencies();
   runApp(const KometCollectionApp());
 }
 
 class KometCollectionApp extends StatelessWidget {
-  const KometCollectionApp({Key? key}) : super(key: key);
+  const KometCollectionApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
+    final appRouter = getIt<AppRouter>();
+
+    return MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => CustomerProvider()),
+        BlocProvider<AuthBloc>(create: (_) => getIt<AuthBloc>()),
+        BlocProvider<CustomerBloc>(create: (_) => getIt<CustomerBloc>()),
       ],
-      child: MaterialApp(
+      child: MaterialApp.router(
         title: 'Komet Collection',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: const AuthGate(),
+        routerConfig: appRouter.config(),
       ),
-    );
-  }
-}
-
-class AuthGate extends StatelessWidget {
-  const AuthGate({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, auth, _) {
-        switch (auth.status) {
-          case AuthStatus.unknown:
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          case AuthStatus.authenticated:
-            return const CustomerListScreen();
-          case AuthStatus.unauthenticated:
-            return const LoginScreen();
-        }
-      },
     );
   }
 }

@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'http://localhost:8000';
   static const String tokenKey = 'jwt_token';
 
   static const String login = '/api/auth/login/';
