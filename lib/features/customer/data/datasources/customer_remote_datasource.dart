@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:komet_collection/core/constants/api_constants.dart';
 import 'package:komet_collection/core/network/dio_client.dart';
-import 'package:komet_collection/core/error/failures.dart';
+import 'package:komet_collection/core/error/dio_exception_handler.dart';
 import 'package:komet_collection/features/customer/data/models/customer_model.dart';
 
 class CustomerRemoteDataSource {
@@ -21,7 +21,7 @@ class CustomerRemoteDataSource {
           .map((e) => CustomerModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
-      throw _handleError(e);
+      throw e.toFailure();
     }
   }
 
@@ -33,7 +33,7 @@ class CustomerRemoteDataSource {
       );
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      throw _handleError(e);
+      throw e.toFailure();
     }
   }
 
@@ -42,6 +42,7 @@ class CustomerRemoteDataSource {
     required String phone,
     String? email,
     String? address,
+    String? aadhar,
   }) async {
     try {
       final response = await _dio.post(
@@ -51,11 +52,12 @@ class CustomerRemoteDataSource {
           'phone': phone,
           'email': email,
           'address': address,
+          'aadhar': aadhar,
         },
       );
       return CustomerModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw _handleError(e);
+      throw e.toFailure();
     }
   }
 
@@ -77,17 +79,8 @@ class CustomerRemoteDataSource {
       );
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      throw _handleError(e);
+      throw e.toFailure();
     }
-  }
-
-  Failure _handleError(DioException e) {
-    if (e.response?.statusCode == 401) {
-      return const AuthFailure('Unauthorized');
-    }
-    return ServerFailure(
-      e.message ?? 'An unexpected error occurred',
-      statusCode: e.response?.statusCode,
-    );
   }
 }
+

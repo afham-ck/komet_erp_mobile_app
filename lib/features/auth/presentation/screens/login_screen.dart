@@ -30,10 +30,12 @@ class _LoginScreenState extends State<LoginScreen> {
   void _login() {
     if (!_formKey.currentState!.validate()) return;
 
-    context.read<AuthBloc>().add(AuthEvent.login(
-      username: _usernameController.text.trim(),
-      password: _passwordController.text,
-    ));
+    context.read<AuthBloc>().add(
+      AuthEvent.login(
+        username: _usernameController.text.trim(),
+        password: _passwordController.text,
+      ),
+    );
   }
 
   @override

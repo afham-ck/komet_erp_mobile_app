@@ -30,7 +30,7 @@ import 'package:komet_collection/features/customer/presentation/screens/customer
 /// [_i1.AddCustomerScreen]
 class AddCustomerRoute extends _i7.PageRouteInfo<void> {
   const AddCustomerRoute({List<_i7.PageRouteInfo>? children})
-      : super(AddCustomerRoute.name, initialChildren: children);
+    : super(AddCustomerRoute.name, initialChildren: children);
 
   static const String name = 'AddCustomerRoute';
 
@@ -46,7 +46,7 @@ class AddCustomerRoute extends _i7.PageRouteInfo<void> {
 /// [_i2.AuthGateScreen]
 class AuthGateRoute extends _i7.PageRouteInfo<void> {
   const AuthGateRoute({List<_i7.PageRouteInfo>? children})
-      : super(AuthGateRoute.name, initialChildren: children);
+    : super(AuthGateRoute.name, initialChildren: children);
 
   static const String name = 'AuthGateRoute';
 
@@ -66,10 +66,10 @@ class CollectPaymentRoute extends _i7.PageRouteInfo<CollectPaymentRouteArgs> {
     required _i9.Customer customer,
     List<_i7.PageRouteInfo>? children,
   }) : super(
-          CollectPaymentRoute.name,
-          args: CollectPaymentRouteArgs(key: key, customer: customer),
-          initialChildren: children,
-        );
+         CollectPaymentRoute.name,
+         args: CollectPaymentRouteArgs(key: key, customer: customer),
+         initialChildren: children,
+       );
 
   static const String name = 'CollectPaymentRoute';
 
@@ -113,10 +113,10 @@ class CustomerDetailRoute extends _i7.PageRouteInfo<CustomerDetailRouteArgs> {
     required _i9.Customer customer,
     List<_i7.PageRouteInfo>? children,
   }) : super(
-          CustomerDetailRoute.name,
-          args: CustomerDetailRouteArgs(key: key, customer: customer),
-          initialChildren: children,
-        );
+         CustomerDetailRoute.name,
+         args: CustomerDetailRouteArgs(key: key, customer: customer),
+         initialChildren: children,
+       );
 
   static const String name = 'CustomerDetailRoute';
 
@@ -156,7 +156,7 @@ class CustomerDetailRouteArgs {
 /// [_i5.CustomerListScreen]
 class CustomerListRoute extends _i7.PageRouteInfo<void> {
   const CustomerListRoute({List<_i7.PageRouteInfo>? children})
-      : super(CustomerListRoute.name, initialChildren: children);
+    : super(CustomerListRoute.name, initialChildren: children);
 
   static const String name = 'CustomerListRoute';
 
@@ -172,7 +172,7 @@ class CustomerListRoute extends _i7.PageRouteInfo<void> {
 /// [_i6.LoginScreen]
 class LoginRoute extends _i7.PageRouteInfo<void> {
   const LoginRoute({List<_i7.PageRouteInfo>? children})
-      : super(LoginRoute.name, initialChildren: children);
+    : super(LoginRoute.name, initialChildren: children);
 
   static const String name = 'LoginRoute';
 

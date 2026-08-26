@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:dartz/dartz.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:komet_collection/features/auth/domain/entities/user.dart';
+import 'package:komet_collection/features/auth/data/models/user_model.dart';
 import 'package:komet_collection/features/auth/domain/repositories/auth_repository.dart';
-import 'package:komet_collection/core/constants/api_constants.dart';
 import 'package:komet_collection/core/error/failures.dart';
 import 'package:komet_collection/features/auth/data/datasources/auth_remote_datasource.dart';
 
@@ -15,44 +15,16 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, User>> login(String username, String password) async {
     try {
-      if (username == 'user@example.com' && password == '12345') {
-        const token = 'mock-test-token';
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(ApiConstants.tokenKey, token);
-        const user = User(
-          id: '1',
-          username: 'john_doe',
-          email: 'user@example.com',
-          role: 'store_user',
-          storeId: 2,
-          storeName: 'Main Branch Jewelry Store',
-        );
-        await prefs.setString('user_details', jsonEncode(user.toJson()));
-        return const Right(user);
-      }
-      
-      final data = await _remoteDataSource.login(username, password);
-      final token = data['access'] ?? '';
-      if (token.isEmpty) {
-        return const Left(AuthFailure('No access token received'));
-      }
-      
-      final userMap = data['user'] as Map<String, dynamic>?;
-      if (userMap == null) {
-        return const Left(AuthFailure('No user details received'));
-      }
-      
-      final user = User.fromJson(userMap);
-      
+      final userModel = await _remoteDataSource.login(username, password);
+
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(ApiConstants.tokenKey, token);
-      await prefs.setString('user_details', jsonEncode(user.toJson()));
-      
-      return Right(user);
+      await prefs.setString('user', jsonEncode(userModel.toJson()));
+
+      return Right(userModel.toEntity());
     } on Failure catch (e) {
       return Left(e);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return const Left(UnknownFailure());
     }
   }
 
@@ -60,21 +32,10 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, void>> logout() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(ApiConstants.tokenKey);
-      await prefs.remove('user_details');
+      await prefs.remove('user');
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, String?>> getToken() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return Right(prefs.getString(ApiConstants.tokenKey));
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return const Left(UnknownFailure());
     }
   }
 
@@ -82,18 +43,27 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, User?>> getAuthenticatedUser() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(ApiConstants.tokenKey);
-      if (token == null || token.isEmpty) {
-        return const Right(null);
-      }
-      final userJson = prefs.getString('user_details');
+      final userJson = prefs.getString('user');
       if (userJson == null || userJson.isEmpty) {
         return const Right(null);
       }
       final userMap = jsonDecode(userJson) as Map<String, dynamic>;
-      return Right(User.fromJson(userMap));
+      final userModel = UserModel.fromJson(userMap);
+      return Right(userModel.toEntity());
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> saveUser(User user) async {
+    try {
+      final userModel = UserModel.fromEntity(user);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user', jsonEncode(userModel.toJson()));
+      return const Right(null);
+    } catch (e) {
+      return const Left(UnknownFailure());
     }
   }
 }

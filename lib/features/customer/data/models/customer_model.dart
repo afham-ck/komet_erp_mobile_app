@@ -7,6 +7,7 @@ class CustomerModel extends Customer {
     required super.phone,
     super.email,
     super.address,
+    super.aadhar,
     super.totalDue,
     super.createdAt,
   });
@@ -18,9 +19,27 @@ class CustomerModel extends Customer {
       phone: json['phone'] ?? '',
       email: json['email'],
       address: json['address'],
+      aadhar: json['aadhar'],
       totalDue: (json['total_due'] ?? json['outstanding_balance'] ?? 0).toDouble(),
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
     );
+  }
+
+  factory CustomerModel.fromEntity(Customer entity) {
+    return CustomerModel(
+      id: entity.id,
+      name: entity.name,
+      phone: entity.phone,
+      email: entity.email,
+      address: entity.address,
+      aadhar: entity.aadhar,
+      totalDue: entity.totalDue,
+      createdAt: entity.createdAt,
+    );
+  }
+
+  Customer toEntity() {
+    return Customer.fromModel(this);
   }
 
   Map<String, dynamic> toJson() => {
@@ -29,6 +48,7 @@ class CustomerModel extends Customer {
     'phone': phone,
     'email': email,
     'address': address,
+    'aadhar': aadhar,
     'total_due': totalDue,
     'created_at': createdAt?.toIso8601String(),
   };

@@ -18,6 +18,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _addressController = TextEditingController();
+  final _aadharController = TextEditingController();
   bool _showAdvanced = false;
 
   @override
@@ -32,6 +33,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     _addressController.dispose();
+    _aadharController.dispose();
     super.dispose();
   }
 
@@ -50,6 +52,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
       phone: _phoneController.text,
       email: _emailController.text.isEmpty ? null : _emailController.text,
       address: _addressController.text.isEmpty ? null : _addressController.text,
+      aadhar: _aadharController.text.isEmpty ? null : _aadharController.text,
     ));
   }
 
@@ -96,6 +99,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                 const SizedBox(height: 24),
                 _buildAdvancedToggle(),
                 if (_showAdvanced) ...[
+                  const SizedBox(height: 16),
+                  _buildField('Aadhar Number', _aadharController,
+                      hint: 'Enter 12-digit Aadhar number', keyboardType: TextInputType.number),
                   const SizedBox(height: 16),
                   _buildField('Email Address', _emailController,
                       hint: 'customer@example.com', keyboardType: TextInputType.emailAddress),

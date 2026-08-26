@@ -12,6 +12,7 @@ abstract class CustomerRepository {
     required String phone,
     String? email,
     String? address,
+    String? aadhar,
   });
   Future<Either<Failure, Payment>> recordPayment({
     required String customerId,

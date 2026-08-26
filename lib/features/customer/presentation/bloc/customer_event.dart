@@ -11,6 +11,7 @@ class CustomerEvent with _$CustomerEvent {
     required String phone,
     String? email,
     String? address,
+    String? aadhar,
   }) = CreateCustomerEvent;
   const factory CustomerEvent.recordPayment({
     required String customerId,

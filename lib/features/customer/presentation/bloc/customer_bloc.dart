@@ -43,6 +43,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       phone: event.phone,
       email: event.email,
       address: event.address,
+      aadhar: event.aadhar,
     );
     result.fold(
       (failure) => emit(state.copyWith(isLoading: false, error: failure.message)),

@@ -21,7 +21,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
     } on Failure catch (e) {
       return Left(e);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return const Left(UnknownFailure());
     }
   }
 
@@ -38,7 +38,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
     } on Failure catch (e) {
       return Left(e);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return const Left(UnknownFailure());
     }
   }
 
@@ -48,6 +48,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
     required String phone,
     String? email,
     String? address,
+    String? aadhar,
   }) async {
     try {
       final customer = await _remoteDataSource.createCustomer(
@@ -55,12 +56,13 @@ class CustomerRepositoryImpl implements CustomerRepository {
         phone: phone,
         email: email,
         address: address,
+        aadhar: aadhar,
       );
       return Right(customer);
     } on Failure catch (e) {
       return Left(e);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return const Left(UnknownFailure());
     }
   }
 
@@ -82,7 +84,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
     } on Failure catch (e) {
       return Left(e);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return const Left(UnknownFailure());
     }
   }
 }
