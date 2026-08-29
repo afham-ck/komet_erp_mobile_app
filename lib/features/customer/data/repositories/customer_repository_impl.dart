@@ -14,9 +14,17 @@ class CustomerRepositoryImpl implements CustomerRepository {
   CustomerRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<Either<Failure, List<Customer>>> getCustomers({int offset = 0, int limit = 50}) async {
+  Future<Either<Failure, List<Customer>>> getCustomers({
+    int page = 1,
+    int pageSize = 100,
+    String? search,
+  }) async {
     try {
-      final results = await _remoteDataSource.getCustomers(offset: offset, limit: limit);
+      final results = await _remoteDataSource.getCustomers(
+        page: page,
+        pageSize: pageSize,
+        search: search,
+      );
       return Right(results);
     } on Failure catch (e) {
       return Left(e);

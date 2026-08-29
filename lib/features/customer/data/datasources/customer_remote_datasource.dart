@@ -9,14 +9,25 @@ class CustomerRemoteDataSource {
 
   CustomerRemoteDataSource() : _dio = DioClient.instance;
 
-  Future<List<CustomerModel>> getCustomers({int offset = 0, int limit = 50}) async {
+  Future<List<CustomerModel>> getCustomers({
+    int page = 1,
+    int pageSize = 100,
+    String? search,
+  }) async {
     try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'page_size': pageSize,
+      };
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
       final response = await _dio.get(
         ApiConstants.customers,
-        queryParameters: {'offset': offset, 'limit': limit},
+        queryParameters: queryParams,
       );
       final data = response.data;
-      final results = data['results'] ?? data;
+      final results = data is Map<String, dynamic> ? (data['results'] ?? data) : data;
       return (results as List)
           .map((e) => CustomerModel.fromJson(e as Map<String, dynamic>))
           .toList();

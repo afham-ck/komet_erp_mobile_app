@@ -9,6 +9,8 @@ import 'package:komet_collection/features/customer/domain/entities/customer.dart
 import 'package:komet_collection/features/customer/domain/entities/invoice.dart';
 import 'package:komet_collection/core/router/app_router.gr.dart';
 
+import 'package:komet_collection/core/widgets/error_tile.dart';
+
 @RoutePage()
 class CustomerDetailScreen extends StatefulWidget {
   final Customer customer;
@@ -62,8 +64,13 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             return Column(
               children: [
                 _buildSummaryCard(state),
-                if (state.error != null && state.invoices.isEmpty)
-                  _buildErrorBanner(state.error!),
+                if (state.error != null)
+                  ErrorTile(
+                    message: state.error!,
+                    onRetry: () {
+                      context.read<CustomerBloc>().add(CustomerEvent.loadLedger(customerId: _customer.id));
+                    },
+                  ),
                 Expanded(child: _buildInvoiceList(state)),
               ],
             );
@@ -126,29 +133,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
               },
               icon: const Icon(Icons.payment),
               label: const Text('Collect Payment'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorBanner(String message) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: theme.colorScheme.secondaryContainer,
-      child: Row(
-        children: [
-          Icon(Icons.info, color: theme.colorScheme.onSecondaryContainer),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                color: theme.colorScheme.onSecondaryContainer,
-                fontSize: 12,
-              ),
             ),
           ),
         ],

@@ -19,7 +19,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final _emailController = TextEditingController();
   final _addressController = TextEditingController();
   final _aadharController = TextEditingController();
-  bool _showAdvanced = false;
 
   @override
   void initState() {
@@ -38,21 +37,29 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   }
 
   void _createCustomer() {
-    if (_nameController.text.isEmpty) {
+    if (_nameController.text.trim().isEmpty) {
       _showError('Please enter customer name');
       return;
     }
-    if (_phoneController.text.isEmpty) {
+    if (_phoneController.text.trim().isEmpty) {
       _showError('Please enter phone number');
+      return;
+    }
+    if (_aadharController.text.trim().isEmpty) {
+      _showError('Please enter Aadhar number');
+      return;
+    }
+    if (_addressController.text.trim().isEmpty) {
+      _showError('Please enter address');
       return;
     }
 
     context.read<CustomerBloc>().add(CustomerEvent.createCustomer(
-      name: _nameController.text,
-      phone: _phoneController.text,
-      email: _emailController.text.isEmpty ? null : _emailController.text,
-      address: _addressController.text.isEmpty ? null : _addressController.text,
-      aadhar: _aadharController.text.isEmpty ? null : _aadharController.text,
+      name: _nameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+      address: _addressController.text.trim(),
+      aadhar: _aadharController.text.trim(),
     ));
   }
 
@@ -69,23 +76,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Add Customer'), elevation: 0),
-      body: BlocConsumer<CustomerBloc, CustomerState>(
-        listener: (context, state) {
-          if (state.successMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.successMessage!),
-                duration: const Duration(seconds: 2),
-                backgroundColor: Colors.green,
-              ),
-            );
-            context.read<CustomerBloc>().add(const CustomerEvent.clearMessages());
-            context.router.pop();
-          } else if (state.error != null) {
-            _showError(state.error!);
-            context.read<CustomerBloc>().add(const CustomerEvent.clearMessages());
-          }
-        },
+      body: BlocBuilder<CustomerBloc, CustomerState>(
         builder: (context, state) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -96,19 +87,15 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                 const SizedBox(height: 16),
                 _buildField('Phone Number *', _phoneController,
                     hint: 'Enter 10-digit phone number', prefix: '+91 ', keyboardType: TextInputType.phone),
+                const SizedBox(height: 16),
+                _buildField('Aadhar Number *', _aadharController,
+                    hint: 'Enter 12-digit Aadhar number', keyboardType: TextInputType.number),
+                const SizedBox(height: 16),
+                _buildField('Email Address', _emailController,
+                    hint: 'customer@example.com', keyboardType: TextInputType.emailAddress),
+                const SizedBox(height: 16),
+                _buildField('Address *', _addressController, hint: 'Enter full address', maxLines: 3),
                 const SizedBox(height: 24),
-                _buildAdvancedToggle(),
-                if (_showAdvanced) ...[
-                  const SizedBox(height: 16),
-                  _buildField('Aadhar Number', _aadharController,
-                      hint: 'Enter 12-digit Aadhar number', keyboardType: TextInputType.number),
-                  const SizedBox(height: 16),
-                  _buildField('Email Address', _emailController,
-                      hint: 'customer@example.com', keyboardType: TextInputType.emailAddress),
-                  const SizedBox(height: 16),
-                  _buildField('Address', _addressController, hint: 'Enter full address', maxLines: 3),
-                  const SizedBox(height: 24),
-                ],
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -150,29 +137,5 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     );
   }
 
-  Widget _buildAdvancedToggle() {
-    final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: () => setState(() => _showAdvanced = !_showAdvanced),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              _showAdvanced ? Icons.expand_less : Icons.expand_more,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Advanced Information',
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
+

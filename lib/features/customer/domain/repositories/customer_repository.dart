@@ -5,7 +5,11 @@ import 'package:komet_collection/features/customer/domain/entities/payment.dart'
 import 'package:komet_collection/core/error/failures.dart';
 
 abstract class CustomerRepository {
-  Future<Either<Failure, List<Customer>>> getCustomers({int offset = 0, int limit = 50});
+  Future<Either<Failure, List<Customer>>> getCustomers({
+    int page = 1,
+    int pageSize = 100,
+    String? search,
+  });
   Future<Either<Failure, ({List<Invoice> invoices, double totalDue})>> getCustomerLedger(String customerId);
   Future<Either<Failure, Customer>> createCustomer({
     required String name,

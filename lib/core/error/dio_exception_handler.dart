@@ -30,7 +30,7 @@ Failure handleDioException(DioException e) {
 
   // Server responses with error status codes (4xx, 5xx)
   if (e.response != null) {
-    final message = _extractErrorMessage(e) ?? e.message ?? 'An unexpected error occurred';
+    final message = _extractErrorMessage(e) ?? 'Server error (${statusCode ?? 'unknown'}). Please try again.';
     return ServerFailure(message, statusCode);
   }
 
@@ -38,15 +38,47 @@ Failure handleDioException(DioException e) {
   return const UnknownFailure();
 }
 
-/// Helper function to extract error message from API response body if present.
+/// Helper function to extract a user-friendly error message from the API response body.
+/// Handles:
+///   - `{"detail": "..."}` — DRF standard detail
+///   - `{"message": "..."}` or `{"error": "..."}` — custom keys
+///   - `{"non_field_errors": ["..."]}` — DRF non-field validation errors
+///   - `{"phone": ["..."], "name": ["..."]}` — DRF field-level validation errors
+///   - Plain string responses
 String? _extractErrorMessage(DioException e) {
   final data = e.response?.data;
   if (data is Map<String, dynamic>) {
+    // Standard detail / message / error keys
     if (data['detail'] is String) return data['detail'] as String;
     if (data['message'] is String) return data['message'] as String;
     if (data['error'] is String) return data['error'] as String;
+
+    // DRF non_field_errors list
+    final nonField = data['non_field_errors'];
+    if (nonField is List && nonField.isNotEmpty) {
+      return nonField.first.toString();
+    }
+
+    // DRF field-level validation errors — e.g. {"phone": ["This field is required."]}
+    // Collect the first message from each field and join them.
+    final fieldMessages = <String>[];
+    for (final entry in data.entries) {
+      final val = entry.value;
+      if (val is List && val.isNotEmpty) {
+        fieldMessages.add('${_capitalize(entry.key)}: ${val.first}');
+      } else if (val is String) {
+        fieldMessages.add('${_capitalize(entry.key)}: $val');
+      }
+    }
+    if (fieldMessages.isNotEmpty) return fieldMessages.join('\n');
   } else if (data is String && data.isNotEmpty) {
     return data;
   }
   return null;
+}
+
+String _capitalize(String key) {
+  final readable = key.replaceAll('_', ' ');
+  if (readable.isEmpty) return readable;
+  return readable[0].toUpperCase() + readable.substring(1);
 }

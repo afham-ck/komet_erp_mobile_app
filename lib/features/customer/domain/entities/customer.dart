@@ -2,6 +2,7 @@ import 'package:komet_collection/features/customer/data/models/customer_model.da
 
 class Customer {
   final String id;
+  final String? code;
   final String name;
   final String phone;
   final String? email;
@@ -12,6 +13,7 @@ class Customer {
 
   const Customer({
     required this.id,
+    this.code,
     required this.name,
     required this.phone,
     this.email,
@@ -24,6 +26,7 @@ class Customer {
   factory Customer.fromModel(CustomerModel model) {
     return Customer(
       id: model.id,
+      code: model.code,
       name: model.name,
       phone: model.phone,
       email: model.email,
@@ -37,6 +40,7 @@ class Customer {
   CustomerModel toModel() {
     return CustomerModel(
       id: id,
+      code: code,
       name: name,
       phone: phone,
       email: email,

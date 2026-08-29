@@ -10,6 +10,8 @@ import 'package:komet_collection/features/auth/presentation/bloc/auth_state.dart
 import 'package:komet_collection/features/customer/domain/entities/customer.dart';
 import 'package:komet_collection/core/router/app_router.gr.dart';
 
+import 'package:komet_collection/core/widgets/error_tile.dart';
+
 @RoutePage()
 class CustomerListScreen extends StatefulWidget {
   const CustomerListScreen({super.key});
@@ -35,10 +37,16 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
       if (query.isEmpty) {
         _filteredCustomers = customers;
       } else {
-        _filteredCustomers = customers.where((c) =>
-          c.name.toLowerCase().contains(query.toLowerCase()) ||
-          c.phone.contains(query),
-        ).toList();
+        final q = query.toLowerCase();
+        _filteredCustomers = customers
+            .where(
+              (c) =>
+                  c.name.toLowerCase().contains(q) ||
+                  c.phone.contains(q) ||
+                  c.id.toLowerCase().contains(q) ||
+                  (c.code != null && c.code!.toLowerCase().contains(q)),
+            )
+            .toList();
       }
     });
   }
@@ -61,12 +69,14 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Collection'),
+          title: const Text('Customers'),
           elevation: 0,
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh),
-              onPressed: () => context.read<CustomerBloc>().add(const CustomerEvent.loadCustomers()),
+              onPressed: () => context.read<CustomerBloc>().add(
+                const CustomerEvent.loadCustomers(),
+              ),
               tooltip: 'Refresh',
             ),
             IconButton(
@@ -84,16 +94,35 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
               return const Center(child: CircularProgressIndicator());
             }
 
+            if (state.error != null && state.customers.isEmpty) {
+              return Center(
+                child: ErrorTile(
+                  message: state.error!,
+                  onRetry: () {
+                    context.read<CustomerBloc>().add(
+                      const CustomerEvent.loadCustomers(),
+                    );
+                  },
+                ),
+              );
+            }
+
             // Sync filtered list on data change or search query changes
             final customers = state.customers;
             if (_filteredCustomers.isEmpty && _searchController.text.isEmpty) {
               _filteredCustomers = customers;
             } else if (_searchController.text.isNotEmpty) {
               // Ensure filtered list is computed based on latest customers
-              _filteredCustomers = customers.where((c) =>
-                c.name.toLowerCase().contains(_searchController.text.toLowerCase()) ||
-                c.phone.contains(_searchController.text),
-              ).toList();
+              final q = _searchController.text.toLowerCase();
+              _filteredCustomers = customers
+                  .where(
+                    (c) =>
+                        c.name.toLowerCase().contains(q) ||
+                        c.phone.contains(q) ||
+                        c.id.toLowerCase().contains(q) ||
+                        (c.code != null && c.code!.toLowerCase().contains(q)),
+                  )
+                  .toList();
             } else {
               _filteredCustomers = customers;
             }
@@ -101,8 +130,15 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
             return Column(
               children: [
                 _buildSearchBar(customers),
-                if (state.error != null && state.customers.isEmpty)
-                  _buildErrorBanner(state.error!),
+                if (state.error != null)
+                  ErrorTile(
+                    message: state.error!,
+                    onRetry: () {
+                      context.read<CustomerBloc>().add(
+                        const CustomerEvent.loadCustomers(),
+                      );
+                    },
+                  ),
                 Expanded(
                   child: _filteredCustomers.isEmpty
                       ? _buildEmptyState()
@@ -114,13 +150,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
-            final router = context.router;
-            final bloc = context.read<CustomerBloc>();
-            router.push(const AddCustomerRoute()).then((_) {
-              if (mounted) {
-                bloc.add(const CustomerEvent.loadCustomers());
-              }
-            });
+            context.router.push(const AddCustomerRoute());
           },
           icon: const Icon(Icons.person_add),
           label: const Text('Add Customer'),
@@ -135,7 +165,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Search by name or phone',
+          hintText: 'Search by name, code, or phone',
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
@@ -156,38 +186,21 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
     );
   }
 
-  Widget _buildErrorBanner(String message) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: theme.colorScheme.errorContainer,
-      child: Row(
-        children: [
-          Icon(Icons.error, color: theme.colorScheme.onErrorContainer),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                color: theme.colorScheme.onErrorContainer,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.people_outline, size: 64, color: Theme.of(context).colorScheme.outline),
+          Icon(
+            Icons.people_outline,
+            size: 64,
+            color: Theme.of(context).colorScheme.outline,
+          ),
           const SizedBox(height: 16),
           Text(
-            _searchController.text.isEmpty ? 'No customers yet' : 'No matching customers',
+            _searchController.text.isEmpty
+                ? 'No customers yet'
+                : 'No matching customers',
             style: Theme.of(context).textTheme.titleLarge,
           ),
         ],
@@ -231,6 +244,10 @@ class _CustomerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final displayCode = (customer.code != null && customer.code!.isNotEmpty)
+        ? customer.code!
+        : (customer.id.isNotEmpty ? 'CUST-${customer.id}' : '');
+
     return Card(
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
@@ -238,7 +255,7 @@ class _CustomerTile extends StatelessWidget {
         leading: CircleAvatar(
           backgroundColor: theme.colorScheme.primaryContainer,
           child: Text(
-            customer.name[0].toUpperCase(),
+            customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
             style: TextStyle(
               color: theme.colorScheme.onPrimaryContainer,
               fontWeight: FontWeight.bold,
@@ -249,7 +266,25 @@ class _CustomerTile extends StatelessWidget {
           customer.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text(customer.phone),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (displayCode.isNotEmpty) ...[
+                Text(
+                  'Code: $displayCode',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+              ],
+              Text(customer.phone),
+            ],
+          ),
+        ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,

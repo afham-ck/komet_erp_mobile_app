@@ -25,5 +25,10 @@ void initDependencies() {
 
   // BLoCs
   getIt.registerLazySingleton<AuthBloc>(() => AuthBloc(getIt<AuthRepository>()));
-  getIt.registerFactory<CustomerBloc>(() => CustomerBloc(getIt<CustomerRepository>()));
+  getIt.registerFactory<CustomerBloc>(
+    () => CustomerBloc(
+      getIt<CustomerRepository>(),
+      getIt<AppRouter>(),
+    ),
+  );
 }

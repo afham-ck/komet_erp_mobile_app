@@ -3,7 +3,7 @@ class ApiConstants {
 
   static const String login = '/api/auth/login/';
   static const String refreshToken = '/api/auth/token/refresh/';
-  static const String customers = '/api/customers/';
+  static const String customers = '/api/collection/customers/';
   static const String customerLedger = '/api/billing/invoices/customer_ledger/';
   static const String createCustomer = '/api/collection/customers/';
   static const String recordPayment = '/api/billing/record-payment/';
