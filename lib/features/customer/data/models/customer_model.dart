@@ -10,6 +10,9 @@ class CustomerModel extends Customer {
     super.address,
     super.aadhar,
     super.totalDue,
+    super.overdueAmount,
+    super.nextDueDate,
+    super.isActive,
     super.createdAt,
   });
 
@@ -22,7 +25,10 @@ class CustomerModel extends Customer {
       email: json['email'],
       address: json['address'],
       aadhar: json['aadhar'],
-      totalDue: _parseDouble(json['current_balance'] ?? json['total_due'] ?? json['outstanding_balance']),
+      totalDue: _parseDouble(json['total_due_amount'] ?? json['current_balance'] ?? json['total_due'] ?? json['outstanding_balance']),
+      overdueAmount: _parseDouble(json['overdue_amount']),
+      nextDueDate: json['next_due_date']?.toString(),
+      isActive: json['is_active'] is bool ? json['is_active'] as bool : true,
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'] as String? ?? '') : null,
     );
   }
@@ -44,6 +50,9 @@ class CustomerModel extends Customer {
       address: entity.address,
       aadhar: entity.aadhar,
       totalDue: entity.totalDue,
+      overdueAmount: entity.overdueAmount,
+      nextDueDate: entity.nextDueDate,
+      isActive: entity.isActive,
       createdAt: entity.createdAt,
     );
   }
@@ -61,6 +70,9 @@ class CustomerModel extends Customer {
     'address': address,
     'aadhar': aadhar,
     'total_due': totalDue,
+    'overdue_amount': overdueAmount,
+    'next_due_date': nextDueDate,
+    'is_active': isActive,
     'created_at': createdAt?.toIso8601String(),
   };
 }
