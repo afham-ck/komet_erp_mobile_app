@@ -9,6 +9,9 @@ class Customer {
   final String? address;
   final String? aadhar;
   final double totalDue;
+  final double overdueAmount;
+  final String? nextDueDate;
+  final bool isActive;
   final DateTime? createdAt;
 
   const Customer({
@@ -20,6 +23,9 @@ class Customer {
     this.address,
     this.aadhar,
     this.totalDue = 0.0,
+    this.overdueAmount = 0.0,
+    this.nextDueDate,
+    this.isActive = true,
     this.createdAt,
   });
 
@@ -33,6 +39,9 @@ class Customer {
       address: model.address,
       aadhar: model.aadhar,
       totalDue: model.totalDue,
+      overdueAmount: model.overdueAmount,
+      nextDueDate: model.nextDueDate,
+      isActive: model.isActive,
       createdAt: model.createdAt,
     );
   }
@@ -47,6 +56,9 @@ class Customer {
       address: address,
       aadhar: aadhar,
       totalDue: totalDue,
+      overdueAmount: overdueAmount,
+      nextDueDate: nextDueDate,
+      isActive: isActive,
       createdAt: createdAt,
     );
   }

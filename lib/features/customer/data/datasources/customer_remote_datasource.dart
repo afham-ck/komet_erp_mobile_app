@@ -3,6 +3,9 @@ import 'package:komet_collection/core/constants/api_constants.dart';
 import 'package:komet_collection/core/network/dio_client.dart';
 import 'package:komet_collection/core/error/dio_exception_handler.dart';
 import 'package:komet_collection/features/customer/data/models/customer_model.dart';
+import 'package:komet_collection/features/customer/data/models/customer_detail_model.dart';
+import 'package:komet_collection/features/customer/data/models/enrollment_model.dart';
+import 'package:komet_collection/features/customer/data/models/payment_result_model.dart';
 
 class CustomerRemoteDataSource {
   final Dio _dio;
@@ -31,6 +34,43 @@ class CustomerRemoteDataSource {
       return (results as List)
           .map((e) => CustomerModel.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw e.toFailure();
+    }
+  }
+
+  Future<List<EnrollmentModel>> getEnrollments({
+    required int customerId,
+    String status = 'active',
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'customer': customerId,
+      };
+      if (status.isNotEmpty) {
+        queryParams['status'] = status;
+      }
+      final response = await _dio.get(
+        ApiConstants.enrollments,
+        queryParameters: queryParams,
+      );
+      final data = response.data;
+      final results = data is Map<String, dynamic> ? (data['results'] ?? data) : data;
+      return (results as List)
+          .map((e) => EnrollmentModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw e.toFailure();
+    }
+  }
+
+  Future<CustomerDetailDataModel> getCustomerDetail(String customerId) async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.customerDetail,
+        queryParameters: {'id': customerId},
+      );
+      return CustomerDetailDataModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw e.toFailure();
     }
@@ -67,6 +107,35 @@ class CustomerRemoteDataSource {
         },
       );
       return CustomerModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw e.toFailure();
+    }
+  }
+
+  Future<PaymentResultModel> collectPayment({
+    required int enrollmentId,
+    required double amount,
+    String? paymentDate,
+    String paymentMode = 'cash',
+    String? notes,
+  }) async {
+    try {
+      final data = <String, dynamic>{
+        'enrollmentId': enrollmentId,
+        'amount': amount,
+        'paymentMode': paymentMode,
+      };
+      if (paymentDate != null && paymentDate.isNotEmpty) {
+        data['paymentDate'] = paymentDate;
+      }
+      if (notes != null && notes.isNotEmpty) {
+        data['notes'] = notes;
+      }
+      final response = await _dio.post(
+        ApiConstants.collectPayment,
+        data: data,
+      );
+      return PaymentResultModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw e.toFailure();
     }

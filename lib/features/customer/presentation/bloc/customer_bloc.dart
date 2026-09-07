@@ -14,8 +14,13 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   CustomerBloc(this._repository, this._appRouter)
       : super(const CustomerState()) {
     on<LoadCustomersEvent>(_onLoadCustomers);
+    on<SearchCustomersEvent>(_onSearchCustomers);
+    on<SelectCustomerEvent>(_onSelectCustomer);
+    on<LoadEnrollmentsEvent>(_onLoadEnrollments);
+    on<SelectEnrollmentEvent>(_onSelectEnrollment);
     on<LoadLedgerEvent>(_onLoadLedger);
     on<CreateCustomerEvent>(_onCreateCustomer);
+    on<SubmitCollectPaymentEvent>(_onSubmitCollectPayment);
     on<RecordPaymentEvent>(_onRecordPayment);
     on<ClearMessagesEvent>(_onClearMessages);
   }
@@ -23,24 +28,75 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   Future<void> _onLoadCustomers(
       LoadCustomersEvent event, Emitter<CustomerState> emit) async {
     emit(state.copyWith(isLoading: true, error: null));
-    final result = await _repository.getCustomers();
+    final result = await _repository.getCustomers(search: event.search);
     result.fold(
       (failure) => emit(state.copyWith(isLoading: false, error: failure.message)),
       (customers) =>
-          emit(state.copyWith(isLoading: false, customers: customers)),
+          emit(state.copyWith(isLoading: false, customers: customers, customerSearchResults: customers)),
     );
+  }
+
+  Future<void> _onSearchCustomers(
+      SearchCustomersEvent event, Emitter<CustomerState> emit) async {
+    emit(state.copyWith(isSearchingCustomers: true, error: null));
+    final result = await _repository.getCustomers(search: event.query);
+    result.fold(
+      (failure) => emit(state.copyWith(isSearchingCustomers: false, error: failure.message)),
+      (customers) =>
+          emit(state.copyWith(isSearchingCustomers: false, customerSearchResults: customers)),
+    );
+  }
+
+  Future<void> _onSelectCustomer(
+      SelectCustomerEvent event, Emitter<CustomerState> emit) async {
+    final customer = event.customer;
+    emit(state.copyWith(
+      selectedCustomer: customer,
+      enrollments: [],
+      selectedEnrollment: null,
+      error: null,
+    ));
+
+    if (customer != null) {
+      final custId = int.tryParse(customer.id);
+      if (custId != null) {
+        add(CustomerEvent.loadEnrollments(customerId: custId));
+      }
+    }
+  }
+
+  Future<void> _onLoadEnrollments(
+      LoadEnrollmentsEvent event, Emitter<CustomerState> emit) async {
+    emit(state.copyWith(isLoadingEnrollments: true, error: null));
+    final result = await _repository.getEnrollments(customerId: event.customerId);
+    result.fold(
+      (failure) => emit(state.copyWith(isLoadingEnrollments: false, error: failure.message)),
+      (enrollments) {
+        final selected = enrollments.isNotEmpty ? enrollments.first : null;
+        emit(state.copyWith(
+          isLoadingEnrollments: false,
+          enrollments: enrollments,
+          selectedEnrollment: selected,
+        ));
+      },
+    );
+  }
+
+  void _onSelectEnrollment(
+      SelectEnrollmentEvent event, Emitter<CustomerState> emit) {
+    emit(state.copyWith(selectedEnrollment: event.enrollment));
   }
 
   Future<void> _onLoadLedger(
       LoadLedgerEvent event, Emitter<CustomerState> emit) async {
     emit(state.copyWith(isLoading: true, error: null));
-    final result = await _repository.getCustomerLedger(event.customerId);
+    final result = await _repository.getCustomerDetail(event.customerId);
     result.fold(
       (failure) => emit(state.copyWith(isLoading: false, error: failure.message)),
-      (ledger) => emit(state.copyWith(
+      (detailData) => emit(state.copyWith(
         isLoading: false,
-        invoices: ledger.invoices,
-        totalDue: ledger.totalDue,
+        customerDetailData: detailData,
+        totalDue: detailData.customer.totalDueAmount,
       )),
     );
   }
@@ -57,7 +113,6 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       aadhar: event.aadhar,
     );
 
-    // Extract outcome without async in fold
     String? errorMsg;
     String? createdName;
     result.fold(
@@ -66,7 +121,6 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     );
 
     if (errorMsg != null) {
-      // Stop loading then show the error as a dialog via the AppRouter key
       emit(state.copyWith(isLoading: false));
       final errContext = _appRouter.navigatorKey.currentContext;
       if (errContext != null) {
@@ -87,12 +141,8 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       return;
     }
 
-    // Success — stop loading spinner first
     emit(state.copyWith(isLoading: false));
 
-    // Show the success dialog imperatively via the AppRouter's navigator key.
-    // AppRouter (RootStackRouter) holds a GlobalKey<NavigatorState> scoped to
-    // the app lifecycle — async usage is intentionally safe here.
     final navContext = _appRouter.navigatorKey.currentContext;
     if (navContext != null) {
       // ignore: use_build_context_synchronously
@@ -109,11 +159,9 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
         ),
       );
 
-      // Pop the AddCustomer screen after the dialog is dismissed
       _appRouter.navigatorKey.currentState?.pop();
     }
 
-    // Refresh customer list: clear existing entries then re-fetch first batch
     emit(state.copyWith(customers: [], isLoading: true));
     final refreshResult = await _repository.getCustomers();
     refreshResult.fold(
@@ -121,6 +169,26 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
           emit(state.copyWith(isLoading: false, error: failure.message)),
       (customers) =>
           emit(state.copyWith(isLoading: false, customers: customers)),
+    );
+  }
+
+  Future<void> _onSubmitCollectPayment(
+      SubmitCollectPaymentEvent event, Emitter<CustomerState> emit) async {
+    emit(state.copyWith(isLoading: true, error: null, paymentResult: null));
+    final result = await _repository.collectPayment(
+      enrollmentId: event.enrollmentId,
+      amount: event.amount,
+      paymentDate: event.paymentDate,
+      paymentMode: event.paymentMode,
+      notes: event.notes,
+    );
+    result.fold(
+      (failure) => emit(state.copyWith(isLoading: false, error: failure.message)),
+      (paymentResult) => emit(state.copyWith(
+        isLoading: false,
+        paymentResult: paymentResult,
+        successMessage: 'Payment of ₹${paymentResult.amount.toStringAsFixed(2)} recorded successfully!',
+      )),
     );
   }
 
@@ -143,6 +211,6 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   }
 
   void _onClearMessages(ClearMessagesEvent event, Emitter<CustomerState> emit) {
-    emit(state.copyWith(error: null, successMessage: null));
+    emit(state.copyWith(error: null, successMessage: null, paymentResult: null));
   }
 }
